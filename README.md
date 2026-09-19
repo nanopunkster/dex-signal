@@ -14,25 +14,28 @@ Cyberpunk terminal look: monospace, neon green/magenta glow, scanline overlay, p
 Live readout: pair, active timeframe, signal (BUY/SELL/—), confidence %, price, RSI14, EMA9, EMA21, MACD histogram, vote count.
 Timeframe row reads Dexscreener's own toolbar and lets you switch resolution from the panel.
 The moment a signal actually fires (same trigger as the sound alert), the panel does a gentle glow-pulse colored to match buy/sell, so you know which pair it was for even if you only heard the sound.
+
 Chart Controls, in the same panel, each button showing an explicit ON/OFF state:
+
 ⇅ Price Flip — inverts the price scale via the chart's own native invert. Candles flip vertically, all numbers/labels stay fully readable.
 🎨 Swap Colors — swaps candle up/down colors (body, border, wick).
 ☆ Watch Pair — adds the current pair to the background watch list so you get alerts even with the tab closed.
+
+
 Background watch list (extension popup)
 Paste a dexscreener.com pair URL to add it to the watch list.
 Polled once a minute (chrome.alarms, MV3's minimum interval) via Dexscreener's public API.
+
 Builds its own rolling price history (~5 hours) since the public API has no historical candles, only a live snapshot — this makes background signals an approximation of the real chart, not identical to it.
 Alerts: OS notification, sound (via an offscreen document, since service workers can't use the Audio API directly), and on-page banner — each toggleable in the popup.
-How it works
-File	World	Role
-injected.js	Page (MAIN)	Reads Dexscreener's real TradingView chart object, runs the live indicator poll, dispatches flip/color actions
-indicators.js	Page (MAIN) + background	Shared EMA/RSI/MACD confluence logic
-content.js	Isolated	Builds the combined Live Signal panel (readout + chart controls), plays sounds, shows the banner, relays watch-list requests
-background.js	Service worker	Polls the watch list every minute, stores price history, fires OS notifications
-popup.html / popup.js	Popup	Manage the watch list and alert settings
-offscreen.html / offscreen.js	Offscreen doc	Plays alert sounds for the background-watch path
 
-injected.js and content.js only talk to each other via CustomEvents on window — the standard bridge between a page-world and isolated-world content script. No shared JS objects.
+How it works
+
+File	World	Role
+
+injected.js	Page (MAIN)	Reads Dexscreener's real TradingView chart object, runs the live indicator poll, dispatches flip/color actions
+indicators.js	Page (MAIN) + background	
+Shared EMA/RSI/MACD confluence logic content.js	Isolated	Builds the combined Live Signal panel (readout + chart controls), plays sounds, shows the banner, relays watch-list requests background.js	Service worker	Polls the watch list every minute, stores price history, fires OS notifications popup.html / popup.js	Popup	Manage the watch list and alert settings offscreen.html / offscreen.js	Offscreen doc	Plays alert sounds for the background-watch path injected.js and content.js only talk to each other via CustomEvents on window — the standard bridge between a page-world and isolated-world content script. No shared JS objects.
 
 injected.js dispatches the flip/color actions and drives the live indicator poll; content.js builds the panel and reacts.
 
